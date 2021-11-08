@@ -1,0 +1,138 @@
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+
+from rest_framework.test import APIClient
+from rest_framework import status
+
+User = get_user_model()
+CREATE_USER_URL = reverse('user:create')
+TOKEN_URL = reverse('user:token')
+
+
+def create_user(**params):
+    return User.objects.create_user(**params)
+
+
+class PublicUserApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_create_valid_user_sucess(self):
+        """Testa se a criação do usuário com um payload válido é um sucesso"""
+
+        payload = {
+            'email': 'fernando@test.com',
+            'password': 'fernandotest',
+            'name': 'Test fernando'
+        }
+
+        response = self.client.post(
+            CREATE_USER_URL,
+            data=payload
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        user = User.objects.get(**response.data)
+
+        self.assertTrue(user.check_password(payload['password']))
+        self.assertNotIn('password', response.data)
+
+    def test_user_exists(self):
+
+        payload = {
+            'email': 'fernando@test.com',
+            'password': 'fernandotest',
+            'name': 'Test fernando'
+        }
+
+        create_user(**payload)
+
+        response = self.client.post(
+            CREATE_USER_URL,
+            data=payload
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_password_too_short(self):
+
+        payload = {
+            'email': 'fernando@test.com',
+            'password': 'jwt',
+            'name': 'Test'
+        }
+
+        response = self.client.post(
+            CREATE_USER_URL,
+            data=payload
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        user_exists = User.objects.filter(email=payload['email']).exists()
+
+        self.assertFalse(user_exists)
+
+    def test_create_token_for_user(self):
+        payload = {
+            'email': 'fernando@test.com',
+            'password': 'fernandotest'
+        }
+
+        create_user(**payload)
+
+        response = self.client.post(
+            TOKEN_URL,
+            payload
+        )
+
+        self.assertIn('token', response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_create_token_invalid_credentials(self):
+        create_user(
+            email="fernando@test.com",
+            password="fernandotest"
+        )
+
+        payload = {
+            'email': 'fernando@test.com',
+            'password': 'wrong'
+        }
+
+        response = self.client.post(
+            TOKEN_URL,
+            payload
+        )
+
+        self.assertNotIn('token', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_token_no_user(self):
+        payload = {
+            'email': 'fernando@test.com',
+            'password': 'fernandotest'
+        }
+
+        response = self.client.post(
+            TOKEN_URL,
+            payload
+        )
+
+        self.assertNotIn('token', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_token_missing_field(self):
+        payload = {
+            'email': 'fernando@test.com'
+        }
+
+        response = self.client.post(
+            TOKEN_URL,
+            payload
+        )
+
+        self.assertNotIn('token', response.data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
