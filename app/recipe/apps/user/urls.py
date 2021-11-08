@@ -2,7 +2,8 @@ from django.urls import path
 
 from recipe.apps.user.views.authentication import (
     UserView,
-    CreateTokenView
+    CreateTokenView,
+    ManagerUserView
 )
 
 
@@ -18,5 +19,10 @@ urlpatterns = [
         'token/',
         CreateTokenView.as_view(),
         name='token'
+    ),
+    path(
+        'me/',
+        ManagerUserView.as_view(),
+        name='me'
     )
 ]
