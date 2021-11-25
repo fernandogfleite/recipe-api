@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import sys
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -133,4 +134,8 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL='core.User'
+AUTH_USER_MODEL = 'core.User'
+
+if 'test' in sys.argv:
+    DEFAULT_FILE_STORAGE = 'inmemorystorage.InMemoryStorage'
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']

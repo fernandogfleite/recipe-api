@@ -11,7 +11,7 @@ TOKEN_URL = reverse('user:token')
 ME_URL = reverse('user:me')
 
 
-def create_user(**params):
+def create_user(**params) -> User:
     return User.objects.create_user(**params)
 
 

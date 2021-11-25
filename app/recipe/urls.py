@@ -26,4 +26,8 @@ urlpatterns = [
         'api/user/',
         include('recipe.apps.user.urls')
     ),
+    path(
+        'api/recipe/',
+        include('recipe.apps.recipes.urls')
+    ),
 ]
